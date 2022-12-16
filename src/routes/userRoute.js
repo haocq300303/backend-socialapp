@@ -24,4 +24,7 @@ routerUser.put("/:id/unfollow", userController.unFollowUser);
 //SEARCH USER
 routerUser.get("/search/:username", userController.searchUser);
 
+// GET FOLLOWERS
+routerUser.get("/follower/:id", userController.getFollower);
+
 export default routerUser;

@@ -73,6 +73,7 @@ export const postController = {
       }
     } catch (error) {
       next(error);
+      ``;
     }
   },
   sharePost: async (req, res, next) => {

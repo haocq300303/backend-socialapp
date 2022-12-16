@@ -112,4 +112,27 @@ export const userController = {
       next(error);
     }
   },
+  getFollower: async (req, res, next) => {
+    try {
+      const dataFollowers = [];
+      const userList = await User.findById(req.params.id);
+      const responses = await Promise.all(
+        userList.followers.map(async (item) => {
+          return await User.findById(item);
+        })
+      );
+      for (const response of responses) {
+        dataFollowers.push({
+          _id: response._id,
+          avatar: response.avatar,
+          username: response.username,
+          desc: response.desc,
+          city: response.city,
+        });
+      }
+      res.status(200).json(dataFollowers);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
