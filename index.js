@@ -13,7 +13,6 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // connect DB
-connectDB();
 
 // middleware
 app.use(cors());
@@ -36,6 +35,13 @@ app.use((err, req, res, next) => {
     message,
   });
 });
+try {
+  (async () => {
+    await connectDB();
+  })();
+} catch (error) {
+  console.log("error", error);
+}
 
 app.listen(PORT, () => {
   console.log(`Server listening to http://localhost:${PORT}`);
