@@ -1,10 +1,11 @@
 import express from "express";
 import { postController } from "../controllers/postController.js";
+import { verifyToken } from "../middlewares/auth.js";
 
 const routerPost = express.Router();
 
 // CREATE A POST
-routerPost.post("/", postController.createPost);
+routerPost.post("/", verifyToken, postController.createPost);
 
 // GET A POST
 routerPost.get("/:id", postController.getOnePost);
@@ -16,21 +17,24 @@ routerPost.get("/", postController.getAllPost);
 routerPost.get("/all/:userId", postController.getAllPostForOneUser);
 
 // UPDATE A POST
-routerPost.put("/:id", postController.updatePost);
+routerPost.put("/:id", verifyToken, postController.updatePost);
 
 // DELETE A POST
-routerPost.delete("/:id", postController.deletePost);
+routerPost.delete("/:id", verifyToken, postController.deletePost);
 
 // LIKE / DISLIKE A POST
-routerPost.put("/:id/like", postController.changeLikePost);
+routerPost.put("/:id/like", verifyToken, postController.changeLikePost);
 
 // SHARE A POST
-routerPost.put("/:id/share", postController.sharePost);
+routerPost.put("/:id/share", verifyToken, postController.sharePost);
 
 // GET TIMELINE POST
-routerPost.post("/timeline/all", postController.timelinePost);
+routerPost.post("/timeline/all", verifyToken, postController.timelinePost);
 
 // LOAD ALL IMAGE FOR USER
 routerPost.get("/images/:idUser", postController.loadAllImagePost);
+
+// GET SUGGESTED POST
+routerPost.get("/suggested/all", postController.getSuggestedPost);
 
 export default routerPost;

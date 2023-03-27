@@ -1,4 +1,4 @@
-import User from "../modules/User.js";
+import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import { createError } from "../createError.js";
 
@@ -65,33 +65,15 @@ export const userController = {
           await currentUser.updateOne({ $push: { followings: req.params.id } });
           res.status(200).json("User has been followed!!");
         } else {
-          next(createError(403, "you allready follow this user!"));
+          await user.updateOne({ $pull: { followers: req.body.userId } });
+          await currentUser.updateOne({ $pull: { followings: req.params.id } });
+          res.status(200).json("User has been unfollowed!!");
         }
       } catch (error) {
         next(error);
       }
     } else {
       next(createError(403, "You cant follow youself!!"));
-    }
-  },
-  unFollowUser: async (req, res, next) => {
-    if (req.body.userId !== req.params.id) {
-      try {
-        const user = await User.findById(req.params.id);
-        const currentUser = await User.findById(req.body.userId);
-
-        if (user.followers.includes(req.body.userId)) {
-          await user.updateOne({ $pull: { followers: req.body.userId } });
-          await currentUser.updateOne({ $pull: { followings: req.params.id } });
-          res.status(200).json("User has been unfollowed!!");
-        } else {
-          next(createError(403, "you allready unfollow this user"));
-        }
-      } catch (error) {
-        next(error);
-      }
-    } else {
-      next(createError(403, "You cant unfollow youself!!"));
     }
   },
   searchUser: async (req, res, next) => {
@@ -105,6 +87,7 @@ export const userController = {
           id: data._id,
           avatar: data.avatar,
           username: data.username,
+          email: data.email,
         };
       });
       res.status(200).json(datas);
@@ -114,23 +97,43 @@ export const userController = {
   },
   getFollower: async (req, res, next) => {
     try {
-      const dataFollowers = [];
-      const userList = await User.findById(req.params.id);
-      const responses = await Promise.all(
-        userList.followers.map(async (item) => {
-          return await User.findById(item);
-        })
-      );
-      for (const response of responses) {
-        dataFollowers.push({
-          _id: response._id,
-          avatar: response.avatar,
-          username: response.username,
-          desc: response.desc,
-          city: response.city,
-        });
+      if (req.params.id) {
+        const dataFollowers = [];
+        const userList = await User.findById(req.params.id);
+        const responses = await Promise.all(
+          userList.followers.map(async (item) => {
+            return await User.findById(item);
+          })
+        );
+        for (const response of responses) {
+          dataFollowers.push({
+            _id: response._id,
+            email: response.email,
+            avatar: response.avatar,
+            username: response.username,
+            desc: response.desc,
+            city: response.city,
+          });
+        }
+        res.status(200).json(dataFollowers);
+      } else {
+        res.status(400).json({ message: "something error!!" });
       }
-      res.status(200).json(dataFollowers);
+    } catch (error) {
+      next(error);
+    }
+  },
+  getUserSuggested: async (req, res, next) => {
+    try {
+      const users = await User.find({});
+      const bands = ["Nike", "Adidas", "Gucci", "Chanel"];
+      const results = [];
+      bands.forEach((item) => {
+        const result = users.find((value) => value.username === item);
+        if (!result) return;
+        results.push(result);
+      });
+      res.status(200).json(results);
     } catch (error) {
       next(error);
     }

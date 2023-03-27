@@ -1,5 +1,5 @@
-import Comment from "../modules/Comment.js";
-import User from "../modules/User.js";
+import Comment from "../models/Comment.js";
+import User from "../models/User.js";
 import { createError } from "../createError.js";
 
 export const commentController = {
@@ -22,6 +22,14 @@ export const commentController = {
       };
       await comment.updateOne({ $push: { replies: reply } });
       res.status(200).json("The comment has been reply!!");
+    } catch (error) {
+      next(error);
+    }
+  },
+  getAllComment: async (req, res, next) => {
+    try {
+      const comments = await Comment.find({});
+      res.status(200).json(comments);
     } catch (error) {
       next(error);
     }
@@ -114,6 +122,19 @@ export const commentController = {
         await comment.updateOne({ $pull: { likes: req.body.userId } });
         res.status(200).json("The comment has been disliked!!");
       }
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteAllCommentForPost: async (req, res) => {
+    try {
+      const comments = await Comment.find({});
+      const commentsPost = comments
+        .filter((item) => item.idPost === req.body.idPost)
+        .map((item) => item._id);
+
+      await Comment.deleteMany({ _id: { $in: commentsPost } });
+      res.status(200).json({ message: "Delete successfully!!!" });
     } catch (error) {
       next(error);
     }

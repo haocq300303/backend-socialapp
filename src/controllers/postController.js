@@ -1,5 +1,5 @@
-import Post from "../modules/Post.js";
-import User from "../modules/User.js";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
 import { createError } from "../createError.js";
 
 export const postController = {
@@ -87,16 +87,20 @@ export const postController = {
   },
   timelinePost: (req, res, next) => {
     try {
-      setTimeout(async () => {
-        const currentUser = await User.findById(req.body.userId);
-        const userPost = await Post.find({ userId: currentUser._id });
-        const friendPosts = await Promise.all(
-          currentUser.followings.map((friendId) => {
-            return Post.find({ userId: friendId });
-          })
-        );
-        res.status(200).json(userPost.reverse().concat(...friendPosts));
-      }, 1500);
+      if (req.body.userId) {
+        setTimeout(async () => {
+          const data = [];
+          const currentUser = await User.findById(req.body.userId);
+          const friendPosts = await Promise.all(
+            currentUser.followings.map((friendId) => {
+              return Post.find({ userId: friendId });
+            })
+          );
+          res.status(200).json(data.concat(...friendPosts).reverse());
+        }, 1000);
+      } else {
+        res.status(400).json({ message: "Something error!!!" });
+      }
     } catch (error) {
       next(error);
     }
@@ -120,6 +124,15 @@ export const postController = {
       const result = allPostForOneUser.map((item) => {
         return { id: item._id, image: item.image };
       });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+  getSuggestedPost: async (req, res, next) => {
+    try {
+      const posts = await Post.find({});
+      const result = posts.filter((post) => post.likes.length >= 5);
       res.status(200).json(result);
     } catch (error) {
       next(error);

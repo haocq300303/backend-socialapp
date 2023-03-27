@@ -1,6 +1,8 @@
-import User from "../modules/User.js";
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createError } from "../createError.js";
+import { generateAccessToken } from "../utils/token.js";
 
 export const authController = {
   register: async (req, res, next) => {
@@ -43,12 +45,37 @@ export const authController = {
         user.password
       );
       if (!validPassword) {
-        return next(createError(400, "Password is not valid!!"));
+        return next(createError(400, "Email/password is not valid!!"));
       }
 
-      res.status(200).json(user);
+      const accessToken = generateAccessToken(user);
+
+      res.status(200).json({ accessToken });
     } catch (error) {
       next(error);
     }
+  },
+  refreshToken: async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.status(401).json("you`re not authenticate");
+    jwt.verify(refreshToken, process.env.JWT_KEY, (error, user) => {
+      if (error) {
+        return res.status(401).json({
+          message: "Token is not valid!",
+        });
+      }
+      const newAccessToken = user;
+      const newRefreshToken = generateAccessToken(newAccessToken);
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: false,
+        path: "/",
+        sameSite: "strict",
+      });
+      return res.status(200).json({ newAccessToken, refreshToken });
+    });
+  },
+  logout: (req, res) => {
+    res.clearnCookie("refreshToken");
   },
 };
